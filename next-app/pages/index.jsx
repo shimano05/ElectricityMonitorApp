@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { getTokenQuery, getEnergyDataQuery } from "./query";
 
 export default function Home() {
   const [loginToken, setLoginToken] = useState("");
@@ -19,44 +20,6 @@ export default function Home() {
 
   // accountNumberの値を環境変数から取得
   const octopusAccountNumber = process.env.NEXT_PUBLIC_OCTOPUS_ACCOUNT_NUMBER;
-
-  // token & refreshToken取得クエリ
-  const getTokenQuery = `
-mutation login($input: ObtainJSONWebTokenInput!) {
-obtainKrakenToken(input: $input) {
-token
-refreshToken
-}
-}
-`;
-
-  // 電気使用量や料金のデータ取得クエリ
-  const getEnergyDataQuery = `
-	query halfHourlyReadings(
-		$accountNumber: String!
-		$fromDatetime: DateTime
-		$toDatetime: DateTime
-	) {
-		account(accountNumber: $accountNumber) {
-			properties {
-				electricitySupplyPoints {
-					agreements {
-						validFrom
-					}
-					halfHourlyReadings(
-						fromDatetime: $fromDatetime
-						toDatetime: $toDatetime
-					) {
-						startAt
-            endAt
-						value
-						costEstimate
-					}
-				}
-			}
-		}
-	}
-`;
 
   // token&refreshTokenクエリ変数
   const tokenVariables = {
@@ -90,8 +53,8 @@ refreshToken
     toDatetime: `${toDayYear}-${todayMonth}-${todayDay}T00:00:00.000Z`,
   };
 
+  // token & refreshToken発行
   useEffect(() => {
-    // token & refreshToken発行
     const getLoginToken = async () => {
       try {
         const res = await axios.post(apiURL, {
@@ -100,6 +63,7 @@ refreshToken
         });
         console.log("getLoginToken", res.status);
         const { token, refreshToken } = res.data.data.obtainKrakenToken;
+
         setLoginToken(token);
         setRefreshToken(refreshToken);
       } catch (error) {
@@ -109,6 +73,7 @@ refreshToken
     getLoginToken();
   }, []);
 
+  // 電気料金＆消費電力のデータ取得
   const getEnergyData = async () => {
     try {
       const res = await axios.post(
@@ -124,29 +89,26 @@ refreshToken
         res.data.data.account.properties[0].electricitySupplyPoints[0];
 
       setEnergyData(halfHourlyReadings);
-      getTotalKwh(halfHourlyReadings);
-      getTotalCostEstimate(halfHourlyReadings);
+      getTotal(halfHourlyReadings);
     } catch (error) {
       console.error("Error", error);
     }
   };
 
-  const getTotalKwh = (halfHourlyReadings) => {
-    const total = halfHourlyReadings.reduce(
+  // 電気料金と消費電力の合計を算出
+  const getTotal = (halfHourlyReadings) => {
+    const totalKwh = halfHourlyReadings.reduce(
       (total, item) => total + Number(item.value),
       0
     );
 
-    setTotalKwh(total);
-  };
-
-  const getTotalCostEstimate = (halfHourlyReadings) => {
-    const total = halfHourlyReadings.reduce(
+    const totalCostEstimate = halfHourlyReadings.reduce(
       (total, item) => total + Number(item.costEstimate),
       0
     );
 
-    setTotalCostEstimate(total);
+    setTotalKwh(totalKwh);
+    setTotalCostEstimate(totalCostEstimate);
   };
 
   return (
