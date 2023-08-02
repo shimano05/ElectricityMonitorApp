@@ -29,28 +29,21 @@ export default function Home() {
     },
   };
 
-  // const today = new Date();
-  // const toDayYear = today.getFullYear();
-  // const todayMonth = today.getMonth() + 1;
-  // const todayDay = today.getDate();
+  const today = new Date();
+  const toDayYear = today.getFullYear();
+  const todayMonth = (today.getMonth() + 1).toString().padStart(2, "0");
+  const todayDay = today.getDate().toString().padStart(2, "0");
 
-  // const yesterday = new Date();
-  // yesterday.setDate(yesterday.getDate() - 1);
-  // const yesterdayYear = yesterday.getFullYear();
-  // const yesterdayMonth = yesterday.getMonth() + 1;
-  // const yesterdayDay = yesterday.getDate();
-
-  const yesterdayYear = "2023";
-  const yesterdayMonth = "07";
-  const yesterdayDay = "30";
-  const toDayYear = "2023";
-  const todayMonth = "07";
-  const todayDay = "31";
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayYear = yesterday.getFullYear();
+  const yesterdayMonth = (yesterday.getMonth() + 1).toString().padStart(2, "0");
+  const yesterdayDay = yesterday.getDate().toString().padStart(2, "0");
 
   const energyVariables = {
     accountNumber: octopusAccountNumber,
-    fromDatetime: `${yesterdayYear}-${yesterdayMonth}-${yesterdayDay}T00:00:00.000Z`,
-    toDatetime: `${toDayYear}-${todayMonth}-${todayDay}T00:00:00.000Z`,
+    fromDatetime: `${yesterdayYear}-${yesterdayMonth}-${yesterdayDay}T00:00:00+09:00`,
+    toDatetime: `${toDayYear}-${todayMonth}-${todayDay}T00:00:00+09:00`,
   };
 
   // token & refreshToken発行
@@ -84,9 +77,8 @@ export default function Home() {
         },
         { headers: { Authorization: loginToken } }
       );
-      console.log("getEnergyData", res.status);
-      const { halfHourlyReadings } =
-        res.data.data.account.properties[0].electricitySupplyPoints[0];
+      console.log("getEnergyData", res.data);
+      const { halfHourlyReadings } = res.data.data.account.properties[0].electricitySupplyPoints[0];
 
       setEnergyData(halfHourlyReadings);
       getTotal(halfHourlyReadings);
@@ -97,15 +89,9 @@ export default function Home() {
 
   // 電気料金と消費電力の合計を算出
   const getTotal = (halfHourlyReadings) => {
-    const totalKwh = halfHourlyReadings.reduce(
-      (total, item) => total + Number(item.value),
-      0
-    );
+    const totalKwh = halfHourlyReadings.reduce((total, item) => total + Number(item.value), 0);
 
-    const totalCostEstimate = halfHourlyReadings.reduce(
-      (total, item) => total + Number(item.costEstimate),
-      0
-    );
+    const totalCostEstimate = halfHourlyReadings.reduce((total, item) => total + Number(item.costEstimate), 0);
 
     setTotalKwh(totalKwh);
     setTotalCostEstimate(totalCostEstimate);
@@ -118,11 +104,8 @@ export default function Home() {
       {energyData ? (
         <div>
           <p>{`トータル電気使用量：${Math.round(totalKwh * 10) / 10}kWh`}</p>
-          <p>
-            {`トータル電気料金：約${
-              Math.round(totalCostEstimate * 100) / 100
-            }円`}
-          </p>
+          {/* <p>{`kwh：${totalKwh}kWh`}</p> */}
+          <p>{`トータル電気料金：約${Math.round(totalCostEstimate * 100) / 100}円`}</p>
         </div>
       ) : (
         <div>
