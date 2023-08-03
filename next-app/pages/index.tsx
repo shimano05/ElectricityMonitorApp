@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { getTokenQuery, getEnergyDataQuery } from "./query";
+import CombChart from "../components/combChart";
 
 export default function Home() {
   const [loginToken, setLoginToken] = useState("");
@@ -113,6 +114,10 @@ export default function Home() {
           <p>{`トータル電気料金：Loding...`}</p>
         </div>
       )}
+      <CombChart
+        kwhData={[1, 2, 3, 4, 5, 97, 133.1, 8, 9, 10, 11, 12]}
+        costData={[1, 2, 3, 4, 142.2, 2758.68, 3780.75, 8, 9, 10, 11, 12]}
+      />
     </div>
   );
 }

@@ -11,7 +11,7 @@ refreshToken
 // 電気使用量や料金のデータ取得クエリ
 export const getEnergyDataQuery = `
 	query halfHourlyReadings(
-		$accountNumber: String!s
+		$accountNumber: String!
 		$fromDatetime: DateTime
 		$toDatetime: DateTime
 	) {
